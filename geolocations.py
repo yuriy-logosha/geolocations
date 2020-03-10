@@ -6,14 +6,14 @@ FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 formatter = logging.Formatter(FORMAT)
 # Create handlers
 c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler('geolocation.log')
+f_handler = logging.FileHandler('geolocations.log')
 
 # Create formatters and add it to handlers
 c_handler.setFormatter(formatter)
 f_handler.setFormatter(formatter)
 
 logging.basicConfig(format=FORMAT, level=20, handlers=[c_handler, f_handler])
-logger = logging.getLogger('geolocation')
+logger = logging.getLogger('geolocations')
 
 
 logger.info("Starting Get Location Service.")
