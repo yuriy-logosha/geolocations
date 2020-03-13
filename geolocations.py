@@ -27,7 +27,7 @@ while True:
             for a in list(myclient.ss_ads.ads.distinct("address_lv", {})):
                 if not a or a.endswith('..'):
                     continue
-                address_geodata = list(myclient.ss_ads.geodata.find({'address_lv': a}))
+                address_geodata = list(myclient.ss_ads.geodata.find({'address': a}))
                 if not address_geodata:
                     logger.info("Processing: %s", a)
                     done = False
@@ -35,7 +35,7 @@ while True:
                         try:
                             geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
                             myclient.ss_ads.geodata.insert({'address': a, 'geodata':geocode_result})
-                            logger.info(list(myclient.ss_ads.geodata.find({'address_lv': a})))
+                            logger.info(list(myclient.ss_ads.geodata.find({'address': a})))
                             done = True
                         except GoogleError as e:
                             logger.error("%s %s", a, e)
