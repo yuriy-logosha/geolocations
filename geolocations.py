@@ -14,6 +14,13 @@ f_handler.setFormatter(formatter)
 
 logging.basicConfig(format=FORMAT, level=20, handlers=[c_handler, f_handler])
 logger = logging.getLogger('geolocations')
+kind_ad = {'kind':'ad'}
+
+
+def get_diff(db):
+    geo_address = list(db.geodata.distinct('address', {}))
+    total_address = list(db.ads.distinct("address_lv", kind_ad))
+    return list(set(total_address) - set(geo_address))
 
 
 logger.info("Starting Get Location Service.")
@@ -24,22 +31,22 @@ while True:
             logger.info("Connected to DB.")
             frm = "{0:>30} {1:7}"
 
-            for a in list(myclient.ss_ads.ads.distinct("address_lv", {})):
+            diff = get_diff(myclient.ss_ads)
+
+            for a in diff:
                 if not a or a.endswith('..'):
                     continue
-                address_geodata = list(myclient.ss_ads.geodata.find({'address': a}))
-                if not address_geodata:
-                    logger.info("Processing: %s", a)
-                    done = False
-                    while not done:
-                        try:
-                            geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
-                            myclient.ss_ads.geodata.insert({'address': a, 'geodata':geocode_result})
-                            logger.info(list(myclient.ss_ads.geodata.find({'address': a})))
-                            done = True
-                        except GoogleError as e:
-                            logger.error("%s %s", a, e)
-                            time.sleep(0.2)
+                logger.info("Processing: %s %s/%s", a, diff.index(a), len(diff))
+                done = False
+                while not done:
+                    try:
+                        geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
+                        myclient.ss_ads.geodata.insert({'address': a, 'geodata': geocode_result})
+                        logger.info(list(myclient.ss_ads.geodata.find({'address': a})))
+                        done = True
+                    except GoogleError as e:
+                        logger.info("Processing: %s %s/%s %s", a, diff.index(a), len(diff), e)
+                        time.sleep(0.1)
 
             logger.info("Waiting: %s s.", 60)
             time.sleep(60)
