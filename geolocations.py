@@ -23,8 +23,9 @@ def get_addresses_to_process(db):
 
     geo_address = list(db.geodata.distinct('address', {}) )
     total_address = list(db.ads.distinct("address_lv", kind_ad))
-    result = list(set(list(set(total_address) - set(geo_address)) + geo_empty))
+    result = list(set(list(set(total_address) - set(geo_address))))
     result.sort()
+    result = result + geo_empty
     return result
 
 
@@ -56,7 +57,7 @@ while True:
                         logger.info(list(myclient.ss_ads.geodata.find({'address': a})))
                         done = True
                     except GoogleError as e:
-                        # logger.info("Processing: %s %s/%s %s", a, diff.index(a), len(diff), e.status)
+                        # logger.info("Processing: %s %s/%s %s", a, addresses_to_process.index(a), len(addresses_to_process), e.status)
                         time.sleep(0.1)
                     except Exception as e:
                         logger.error(e)
