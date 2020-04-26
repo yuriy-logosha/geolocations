@@ -23,7 +23,9 @@ def get_addresses_to_process(db):
 
     geo_address = list(db.geodata.distinct('address', {}) )
     total_address = list(db.ads.distinct("address_lv", kind_ad))
-    return list(set(total_address) - set(geo_address)) + geo_empty
+    result = list(set(list(set(total_address) - set(geo_address)) + geo_empty))
+    result.sort()
+    return result
 
 
 logger.info("Starting Get Location Service.")
@@ -46,8 +48,8 @@ while True:
                     try:
                         geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
                         exist = list(myclient.ss_ads.geodata.find({'address': a}))
-                        if (len(exist) > 0):
-                            if (geocode_result):
+                        if len(exist) > 0:
+                            if geocode_result:
                                 myclient.ss_ads.geodata.update_one({'_id': exist[0]['_id']}, {'$set': {'geodata': geocode_result}})
                         else:
                             myclient.ss_ads.geodata.insert_one({'address': a, 'geodata': geocode_result})
