@@ -17,10 +17,13 @@ logger = logging.getLogger('geolocations')
 kind_ad = {'kind':'ad'}
 
 
-def get_diff(db):
-    geo_address = list(db.geodata.distinct('address', {}))
+def get_addresses_to_process(db):
+    geo_empty = list(db.geodata.distinct('address', {"geodata": []}) )
+    geo_empty.sort(reverse=True)
+
+    geo_address = list(db.geodata.distinct('address', {}) )
     total_address = list(db.ads.distinct("address_lv", kind_ad))
-    return list(set(total_address) - set(geo_address))
+    return list(set(total_address) - set(geo_address)) + geo_empty
 
 
 logger.info("Starting Get Location Service.")
@@ -31,25 +34,33 @@ while True:
             logger.info("Connected to DB.")
             frm = "{0:>30} {1:7}"
 
-            diff = get_diff(myclient.ss_ads)
+            addresses_to_process = get_addresses_to_process(myclient.ss_ads)
 
-            for a in diff:
+            for a in addresses_to_process:
                 if not a or a.endswith('..'):
+                    logger.info("Skip: %s %s/%s", a, addresses_to_process.index(a), len(addresses_to_process))
                     continue
-                logger.info("Processing: %s %s/%s", a, diff.index(a), len(diff))
+                logger.info("Processing: %s %s/%s", a, addresses_to_process.index(a), len(addresses_to_process))
                 done = False
                 while not done:
                     try:
                         geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
-                        myclient.ss_ads.geodata.insert({'address': a, 'geodata': geocode_result})
+                        exist = list(myclient.ss_ads.geodata.find({'address': a}))
+                        if (len(exist) > 0):
+                            if (geocode_result):
+                                myclient.ss_ads.geodata.update_one({'_id': exist[0]['_id']}, {'$set': {'geodata': geocode_result}})
+                        else:
+                            myclient.ss_ads.geodata.insert_one({'address': a, 'geodata': geocode_result})
                         logger.info(list(myclient.ss_ads.geodata.find({'address': a})))
                         done = True
                     except GoogleError as e:
-                        logger.info("Processing: %s %s/%s %s", a, diff.index(a), len(diff), e)
+                        # logger.info("Processing: %s %s/%s %s", a, diff.index(a), len(diff), e.status)
                         time.sleep(0.1)
+                    except Exception as e:
+                        logger.error(e)
 
             logger.info("Waiting: %s s.", 60)
             time.sleep(60)
 
-    except RuntimeError as e:
+    except Exception as e:
         logger.error(e)
