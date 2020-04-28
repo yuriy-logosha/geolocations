@@ -1,6 +1,8 @@
-import pymongo, logging, time
-from utils import google_geocode, GoogleError
+import logging
+import pymongo
+import time
 
+from utils import google_geocode, GoogleError
 
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 formatter = logging.Formatter(FORMAT)
@@ -18,15 +20,12 @@ kind_ad = {'kind':'ad'}
 
 
 def get_addresses_to_process(db):
-    geo_empty = list(db.geodata.distinct('address', {"geodata": []}) )
-    geo_empty.sort(reverse=True)
-
     geo_address = list(db.geodata.distinct('address', {}) )
     total_address = list(db.ads.distinct("address_lv", kind_ad))
-    result = list(set(list(set(total_address) - set(geo_address))))
-    result.sort()
-    result = result + geo_empty
-    return result
+    missed = list(set(list(set(total_address) - set(geo_address))))
+    missed.sort()
+
+    return missed
 
 
 logger.info("Starting Get Location Service.")
