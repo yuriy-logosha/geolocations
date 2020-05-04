@@ -22,7 +22,7 @@ kind_ad = {'kind':'ad'}
 def get_addresses_to_process(db):
     geo_address = list(db.geodata.distinct('address', {}) )
     total_address = list(db.ads.distinct("address_lv", kind_ad))
-    missed = list(set(list(set(total_address) - set(geo_address))))
+    missed = list(set(total_address) - set(geo_address))
     missed.sort()
 
     return missed
@@ -47,10 +47,12 @@ while True:
                 while not done:
                     try:
                         geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
+                        if not geocode_result:
+                            geocode_result = google_geocode('riga '+a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
+
                         exist = list(myclient.ss_ads.geodata.find({'address': a}))
                         if len(exist) > 0:
-                            if geocode_result:
-                                myclient.ss_ads.geodata.update_one({'_id': exist[0]['_id']}, {'$set': {'geodata': geocode_result}})
+                            myclient.ss_ads.geodata.update_one({'_id': exist[0]['_id']}, {'$set': {'geodata': geocode_result}})
                         else:
                             myclient.ss_ads.geodata.insert_one({'address': a, 'geodata': geocode_result})
                         logger.info(list(myclient.ss_ads.geodata.find({'address': a})))
