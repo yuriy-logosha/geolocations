@@ -47,9 +47,7 @@ while True:
                 done = False
                 while not done:
                     try:
-                        geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
-                        if not geocode_result:
-                            geocode_result = google_geocode('riga '+a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
+                        geocode_result = google_geocode('riga '+a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
 
                         exist = list(myclient.ss_ads.geodata.find({'address': a}))
                         if len(exist) > 0:
