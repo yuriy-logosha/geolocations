@@ -3,12 +3,13 @@ import pymongo
 import time
 
 from utils import google_geocode, GoogleError
+from logging.handlers import RotatingFileHandler
 
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 formatter = logging.Formatter(FORMAT)
 # Create handlers
 c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler('geolocations.log')
+f_handler = logging.handlers.RotatingFileHandler('geolocations.log', mode='a', maxBytes=5*1024*1024, backupCount=10, encoding=None, delay=0)
 
 # Create formatters and add it to handlers
 c_handler.setFormatter(formatter)
