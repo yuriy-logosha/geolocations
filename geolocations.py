@@ -66,6 +66,7 @@ while True:
 
             logger.info("Waiting: %s s.", 60)
             time.sleep(60)
+            addresses_to_process = get_addresses_to_process(myclient.ss_ads)
 
     except Exception as e:
         logger.error(e)
