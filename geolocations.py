@@ -5,9 +5,11 @@ import time
 from utils import google_geocode, GoogleError
 from logging.handlers import RotatingFileHandler
 
+REQUEST_PREFIX = 'riga '
 G_KEY = 'AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA'
 REQUESTS_TIMEOUT = 0.2
 ITERATIONS_TIMEOUT = 60
+BACKOFF_TIMEOUT = 10 * 60
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 formatter = logging.Formatter(FORMAT)
 # Create handlers
@@ -48,9 +50,13 @@ while True:
                     continue
                 logger.info("Processing: %s %s/%s", a, addresses_to_process.index(a), len(addresses_to_process))
                 done = False
+                start_time = time.time()
                 while not done:
+                    if time.time() - start_time > BACKOFF_TIMEOUT:
+                        logger.warning("Skip %s as of timeout.", a)
+                        break
                     try:
-                        geocode_result = google_geocode('riga '+a, key=G_KEY)
+                        geocode_result = google_geocode(REQUEST_PREFIX + a, key=G_KEY)
                         if not geocode_result:
                             geocode_result = google_geocode(a, key=G_KEY)
 
@@ -67,7 +73,7 @@ while True:
                     except Exception as e:
                         logger.error(e)
 
-            logger.info("Waiting: %s s.", 60)
+            logger.info("Waiting: %s s.", ITERATIONS_TIMEOUT)
             time.sleep(ITERATIONS_TIMEOUT)
             addresses_to_process = get_addresses_to_process(myclient.ss_ads)
 
