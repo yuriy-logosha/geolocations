@@ -58,7 +58,8 @@ while True:
                 conn_err_start = 0
                 conn_err_count = 0
                 while not done:
-                    if time.time() - start_time > BACKOFF_TIMEOUT or time.time() - conn_err_start > CONN_ERR_BACKOFF_TIMEOUT:
+                    if time.time() - start_time > BACKOFF_TIMEOUT or \
+                            (conn_err_count > 0 and time.time() - conn_err_start > CONN_ERR_BACKOFF_TIMEOUT):
                         logger.warning("Skip %s as of timeout.", a)
                         conn_err_count = 0
                         break
