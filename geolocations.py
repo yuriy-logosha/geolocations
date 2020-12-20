@@ -70,3 +70,6 @@ while True:
 
     except Exception as e:
         logger.error(e)
+        time.sleep(5)
+
+logger.info("Stopping Get Location Service.")
