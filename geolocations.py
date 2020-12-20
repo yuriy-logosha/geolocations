@@ -5,6 +5,9 @@ import time
 from utils import google_geocode, GoogleError
 from logging.handlers import RotatingFileHandler
 
+G_KEY = 'AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA'
+REQUESTS_TIMEOUT = 0.2
+ITERATIONS_TIMEOUT = 60
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 formatter = logging.Formatter(FORMAT)
 # Create handlers
@@ -47,9 +50,9 @@ while True:
                 done = False
                 while not done:
                     try:
-                        geocode_result = google_geocode('riga '+a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
+                        geocode_result = google_geocode('riga '+a, key=G_KEY)
                         if not geocode_result:
-                            geocode_result = google_geocode(a, key='AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA')
+                            geocode_result = google_geocode(a, key=G_KEY)
 
                         exist = list(myclient.ss_ads.geodata.find({'address': a}))
                         if len(exist) > 0:
@@ -60,12 +63,12 @@ while True:
                         done = True
                     except GoogleError as e:
                         # logger.info("Processing: %s %s/%s %s", a, addresses_to_process.index(a), len(addresses_to_process), e.status)
-                        time.sleep(0.1)
+                        time.sleep(REQUESTS_TIMEOUT)
                     except Exception as e:
                         logger.error(e)
 
             logger.info("Waiting: %s s.", 60)
-            time.sleep(60)
+            time.sleep(ITERATIONS_TIMEOUT)
             addresses_to_process = get_addresses_to_process(myclient.ss_ads)
 
     except Exception as e:
