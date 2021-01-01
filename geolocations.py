@@ -7,9 +7,8 @@ from urllib3.exceptions import NewConnectionError
 
 from utils import google_geocode, GoogleError
 
-REQUEST_PREFIX = 'riga '
 G_KEY = 'AIzaSyCasbDiMWMftbKcSnFrez-SF-YCechHSLA'
-REQUESTS_TIMEOUT = 0.2
+BETWEEN_ERRORS_TIMEOUT = 0.2
 ITERATIONS_TIMEOUT = 60
 BACKOFF_TIMEOUT = 30 * 60
 CONN_ERR_BACKOFF_TIMEOUT = 10 * 60
@@ -17,7 +16,7 @@ FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 formatter = logging.Formatter(FORMAT)
 # Create handlers
 c_handler = logging.StreamHandler()
-f_handler = logging.handlers.RotatingFileHandler('geolocations.log', mode='a', maxBytes=5 * 1024 * 1024, backupCount=10,
+f_handler = logging.handlers.RotatingFileHandler('latest.log', maxBytes=5 * 1024 * 1024, backupCount=10,
                                                  encoding=None, delay=0)
 
 # Create formatters and add it to handlers
@@ -64,9 +63,7 @@ while True:
                         conn_err_count = 0
                         break
                     try:
-                        geocode_result = google_geocode(REQUEST_PREFIX + a, key=G_KEY)
-                        if not geocode_result:
-                            geocode_result = google_geocode(a, key=G_KEY)
+                        geocode_result = google_geocode(a, key=G_KEY)
 
                         exist = list(myclient.ss_ads.geodata.find({'address': a}))
                         if len(exist) > 0:
@@ -78,11 +75,12 @@ while True:
                         conn_err_count = 0
                         done = True
                     except GoogleError as e:
-                        time.sleep(REQUESTS_TIMEOUT)
+                        time.sleep(BETWEEN_ERRORS_TIMEOUT)
                     except NewConnectionError as e:
                         if conn_err_count == 0:
                             conn_err_start = time.time()
-                            logger.error("Max retries exceeded with %s", a)
+                            logger.error(e)
+                            logger.info("Max retries exceeded for %s", a)
                         conn_err_count += 1
                     except Exception as e:
                         logger.error(e)
@@ -94,5 +92,3 @@ while True:
     except Exception as e:
         logger.error(e)
         time.sleep(5)
-
-logger.info("Stopping Get Location Service.")
